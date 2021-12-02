@@ -1,0 +1,29 @@
+{
+  "name": "proyecto3",
+  "version": "1.0.0",
+  "description": "Página web donde ciclistas pueden registrar sus marcas en etapas concretas, además de consultar las de otros ciclistas. El ciclista no solo podrá consultar y registrar los tiempos, sino también la bici empleada y la configuración de la misma.",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/andgom97/letscoder-project3.git"
+  },
+  "author": "andgom97",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/andgom97/letscoder-project3/issues"
+  },
+  "homepage": "https://github.com/andgom97/letscoder-project3#readme",
+  "dependencies": {
+    "dotenv": "^10.0.0",
+    "express": "^4.17.1",
+    "mongoose": "^6.0.13"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.15"
+  }
+}
