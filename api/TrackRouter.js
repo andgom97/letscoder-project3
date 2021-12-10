@@ -7,16 +7,22 @@ const TrackRouter = express.Router()
 TrackRouter.get("/tracks", async (req,res)=>{
     let levelid = req.query.levelid
     try {
-        let tracks = await Track.find({level: levelid})
+        let tracks = []
+        if (!levelid){
+            tracks = await Track.find().populate("level")
+        }
+        else {
+            tracks = await Track.find({level: levelid}).populate("level")
+        }
         return res.status(200).json({
             success: true,
-            tracks
+            tracks: tracks
         })
     }
     catch (error){
         return res.status(400).json({
             success: false,
-            message: err.message
+            message: error.message
         })
     }
 }) 
@@ -25,7 +31,7 @@ TrackRouter.get("/tracks", async (req,res)=>{
 TrackRouter.get("/tracks/:trackid", async (req,res)=>{
     const {trackid} = req.params
     try {
-        let track = await Track.findById(trackid)
+        let track = await Track.findById(trackid).populate("level")
         if (!track){
             return res.status(404).json({
                 success: false,
@@ -34,30 +40,30 @@ TrackRouter.get("/tracks/:trackid", async (req,res)=>{
         }
         return res.status(200).json({
             success: true,
-            track
+            track: track
         })
     }
     catch (error){
         return res.status(400).json({
             success: false,
-            message: err.message
+            message: error.message
         })
     }
 }) 
 
 // POST api/tracks (only admins)
 TrackRouter.post("/tracks", async (req,res)=>{
-    const {kilometers, averageTime, level, startLocationLat, startLocationLong, endLocationLat, endLocationLong} = req.body
+    const {kilometers, level, startLocationLat, startLocationLong, endLocationLat, endLocationLong} = req.body
     try {
-        // Check credentials
-        // TODO
-        if (!kilometers || !averageTime || !level || !startLocationLat || !startLocationLong || !endLocationLat || !endLocationLong){
+        if (!kilometers || !level || !startLocationLat || !startLocationLong || !endLocationLat || !endLocationLong){
             return res.status(400).json({
                 success:false,
                 message:"Faltan datos para la creación de la etapa"
             })
         }
-        if (!Level.findById(level)){
+        // Check if level exist
+        let associatedLevel = await Level.findById(level)
+        if (!associatedLevel){
             return res.status(400).json({
                 success:false,
                 message:"La dificultad no se encontró"
@@ -65,8 +71,8 @@ TrackRouter.post("/tracks", async (req,res)=>{
         }
         const newTrack = new Track({
             kilometers,
-            averageTime,
-            level,
+            averageTime: 0,
+            level: level,
             startLocationLat,
             startLocationLong,
             endLocationLat,
@@ -75,82 +81,106 @@ TrackRouter.post("/tracks", async (req,res)=>{
         await newTrack.save()
         return res.status(200).json({
             success:true,
-            newTrack,
+            track: newTrack,
             message:"Etapa creada correctamente!"
         })
     }
     catch (error){
         return res.status(500).json({
             success: false,
-            message: err.message
+            message: error.message
         })
     }
 })
+
 // PUT api/tracks/{trackid} (only admins)
 TrackRouter.put("/tracks/:trackid", async (req,res)=>{
     const {trackid} = req.params
-    const {kilometers, averageTime, level, startLocationLat, startLocationLong, endLocationLat, endLocationLong} = req.body
+    const {kilometers, level, startLocationLat, startLocationLong, endLocationLat, endLocationLong} = req.body
     try {
-        // Check credentials
-        // TODO
-        if (!kilometers || !averageTime || !level || !startLocationLat || !startLocationLong || !endLocationLat || !endLocationLong){
+        if (!kilometers || !level || !startLocationLat || !startLocationLong || !endLocationLat || !endLocationLong){
             return res.status(400).json({
                 success:false,
                 message:"Faltan datos para la modificación de la etapa"
             })
         }
+        // Check if level exist
+        let associatedLevel = await Level.findById(level)
+        if (!associatedLevel){
+            return res.status(400).json({
+                success:false,
+                message:"La dificultad no se encontró"
+            })
+        }
         const update = {
             kilometers: kilometers,
-            averageTime: averageTime,
             level: level,
             startLocationLat: startLocationLat,
             startLocationLong: startLocationLong,
             endLocationLat: endLocationLat,
             endLocationLong: endLocationLong
         }
-        let track = Track.findByIdAndUpdate(trackid,update)
-        if (!track){
-            return res.status(404).json({
-                success:false,
-                message:"La etapa no se encontró"
-            })
-        }
-        return res.status(200).json({
-            success:true,
-            track,
-            message:"Etapa modificada correctamente!"
+        Track.findByIdAndUpdate(trackid,update, function(err,track){
+            if (err){
+                return res.status(400).json({
+                    success: false,
+                    message: err.message
+                })
+            }
+            else {
+                if (!track){
+                    return res.status(404).json({
+                        success:false,
+                        message:"La etapa no se encontró"
+                    })
+                }
+                return res.status(200).json({
+                    success:true,
+                    track: track,
+                    message:"Etapa modificada correctamente!"
+                })
+            }
         })
     }
     catch (error){
         return res.status(500).json({
             success: false,
-            message: err.message
+            message: error.message
         })
     }
 })
+
 // DELETE api/tracks/{trackid} (only admins)
 TrackRouter.delete("/tracks/:trackid", async (req,res)=>{
     const {trackid} = req.params
     try {
-        // Check credentials
-        // TODO
-        let track = Track.findByIdAndDelete(trackid)
-        if (!track){
-            return res.status(404).json({
-                success:false,
-                message:"La etapa no se encontró"
-            })
-        }
-        return res.status(200).json({
-            success:true,
-            track,
-            message:"Etapa eliminada correctamente!"
+        // TODO delete all registries associated to the trackid
+        Track.findByIdAndDelete(trackid, function(err, track){
+            if (err){
+                return res.status(400).json({
+                    success: false,
+                    message: err.message
+                })
+            }
+            else {
+                if (!track){
+                    return res.status(404).json({
+                        success:false,
+                        message:"La etapa no se encontró"
+                    })
+                }
+                return res.status(200).json({
+                    success:true,
+                    track: track,
+                    message:"Etapa eliminada correctamente!"
+                })
+            }
         })
     }
     catch (error){
         return res.status(500).json({
             success: false,
-            message: err.message
+            message: error.message
         })
     }
 })

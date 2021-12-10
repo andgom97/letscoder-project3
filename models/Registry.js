@@ -14,8 +14,12 @@ miliseconds:{
     required: true
 },
 timeStamp:{
-    type: Number,
+    type: Date,
     required: true
+},
+bike:{
+    type: mongoose.Types.ObjectId,
+    ref: "Bike"
 },
 config:{
     type: mongoose.Types.ObjectId,

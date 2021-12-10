@@ -96,7 +96,7 @@ ConfigRouter.post("/configs", async (req,res)=>{
 //PUT api/configs/{configid}
 ConfigRouter.put("/configs/:configid", async (req,res)=>{
     const {configid} = req.params
-    const {bike, frame, saddle, fork, transmission, brakes, sprocket, plate} = req.body    
+    const {frame, saddle, fork, transmission, brakes, sprocket, plate} = req.body    
     try {
         if (!bike || !frame || !saddle || !fork || !transmission || !brakes || !sprocket || !plate){
             return res.status(400).json({

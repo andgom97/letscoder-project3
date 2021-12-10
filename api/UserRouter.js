@@ -15,7 +15,7 @@ UserRouter.get("/users", async (req,res)=>{
         }
         return res.status(200).json({
             success: true,
-            users
+            users: users
         })
     }
     catch (error){
@@ -39,7 +39,7 @@ UserRouter.get("/users/:userid", async (req,res)=>{
         }
         return res.status(200).json({
             success: true,
-            user
+            user: user
         })
     }
     catch (error){
@@ -74,7 +74,7 @@ UserRouter.post("/users", async (req, res)=>{
         await newUser.save()
         return res.status(200).json({
             success:true,
-            newUser,
+            user: newUser,
             message:"Usuario creado correctamente!"
         })
     } catch (error) {
@@ -117,7 +117,7 @@ UserRouter.put("/users/:userid", async (req,res)=>{
                 }     
                 return res.status(200).json({
                     success:true,
-                    update,
+                    user: update,
                     message:"Usuario modificada correctamente!"
                 })
             }
@@ -134,6 +134,8 @@ UserRouter.put("/users/:userid", async (req,res)=>{
 UserRouter.delete("/users/:userid", async (req,res)=>{
     const {userid} = req.params
     try {
+        // TODO delete all bikes associated to the userid
+        // TODO delete all registries associated to the userid
         User.findByIdAndDelete(userid, function(err, user) {
             if(err){
                 return res.status(400).json({
@@ -150,7 +152,7 @@ UserRouter.delete("/users/:userid", async (req,res)=>{
                 }
                 return res.status(200).json({
                     success:true,
-                    user,
+                    user: user,
                     message:"Usuario eliminada correctamente!"
                 })
             }
@@ -162,7 +164,6 @@ UserRouter.delete("/users/:userid", async (req,res)=>{
             message: error.message
         })
     }
-
 })
 
 module.exports = UserRouter

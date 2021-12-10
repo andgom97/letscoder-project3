@@ -93,9 +93,9 @@ BikeRouter.post("/bikes", async (req,res)=>{
 // PUT api/bikes/{bikeid}
 BikeRouter.put("/bikes/:bikeid", async (req,res)=>{
     const {bikeid} = req.params
-    const {user, brand, model} = req.body
+    const {brand, model} = req.body
     try {
-        if (!user || !brand || !model){
+        if (!brand || !model){
             return res.status(400).json({
                 success:false,
                 message:"Faltan datos para la modificación del registro"
@@ -139,6 +139,7 @@ BikeRouter.put("/bikes/:bikeid", async (req,res)=>{
 BikeRouter.delete("/bikes/:bikeid", async (req,res)=>{
     const {bikeid} = req.params
     try {
+        // TODO delete all configs associated to bikeid 
         Bike.findByIdAndDelete(bikeid, function(err, bike){
             if (err){
                 return res.status(400).json({
