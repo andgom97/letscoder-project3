@@ -1,22 +1,29 @@
 const express = require("express");
 const { model } = require("mongoose");
 const Bike = require("../models/Bike");
+const User = require("../models/User")
 const BikeRouter = express.Router()
 
 // GET api/bikes?userid=X
 BikeRouter.get("/bikes", async (req,res)=>{
-    let userid = req.query.userid
+    const userid = req.query.user
     try {
-        let bikes = await Bike.find({user: userid}).populate("user")
+        let bikes = []
+        if (!userid){
+            bikes = await Bike.find().populate("user")  
+        }
+        else {
+            bikes = await Bike.find({user: userid}).populate("user")
+        }
         return res.status(200).json({
             success: true,
-            bikes
+            bikes: bikes
         })
     }
     catch (error){
         return res.status(400).json({
             success: false,
-            message: err.message
+            message: error.message
         })
     }
 }) 
@@ -34,13 +41,13 @@ BikeRouter.get("/bikes/:bikeid", async (req,res)=>{
         }
         return res.status(200).json({
             success: true,
-            bike
+            bike: bike
         })
     }
     catch (error){
         return res.status(400).json({
             success: false,
-            message: err.message
+            message: error.message
         })
     }
 }) 
@@ -55,30 +62,30 @@ BikeRouter.post("/bikes", async (req,res)=>{
                 message:"Faltan datos para la creación de la bici"
             })
         }
-        // Check if exist
-        // user
-        if (!User.findById(user)){
-            return res.status(400).json({
+        //Check if user exists
+        let associatedUser = await User.findById(user) 
+        if (!associatedUser){
+            return res.status(404).json({
                 success: false,
                 message: "El usuario no existe"
             })
         }
         const newBike = new Bike({
-            user,
+            user: user,
             brand,
             model
         })
         await newBike.save()
         return res.status(200).json({
             success:true,
-            newBike,
+            bike: newBike,
             message:"Bici creada correctamente!"
         })
     }
     catch (error){
-        return res.status(500).json({
+        return res.status(400).json({
             success: false,
-            message: err.message
+            message: error.message
         })
     }
 })
@@ -98,23 +105,32 @@ BikeRouter.put("/bikes/:bikeid", async (req,res)=>{
             brand: brand,
             model: model
         }
-        let bike = Bike.findByIdAndUpdate(bikeid,update)
-        if (!bike){
-            return res.status(404).json({
-                success:false,
-                message:"La bicicleta no se encontró"
-            })
-        }
-        return res.status(200).json({
-            success:true,
-            bike,
-            message:"La bicicleta se modificó correctamente!"
+        Bike.findByIdAndUpdate(bikeid,update, function(err,bike) {
+            if (err){
+                return res.status(400).json({
+                    success: false,
+                    message: err.message
+                })
+            }
+            else {
+                if (!bike){
+                    return res.status(404).json({
+                        success:false,
+                        message:"La bicicleta no se encontró"
+                    })
+                }
+                return res.status(200).json({
+                    success:true,
+                    bike: update,
+                    message:"La bicicleta se modificó correctamente!"
+                })
+            }
         })
     }
     catch (error){
         return res.status(500).json({
             success: false,
-            message: err.message
+            message: error.message
         })
     }
 })
@@ -123,23 +139,32 @@ BikeRouter.put("/bikes/:bikeid", async (req,res)=>{
 BikeRouter.delete("/bikes/:bikeid", async (req,res)=>{
     const {bikeid} = req.params
     try {
-        let bike = Bike.findByIdAndDelete(bikeid)
-        if (!bike){
-            return res.status(404).json({
-                success:false,
-                message:"La bicicleta no se encontró"
-            })
-        }
-        return res.status(200).json({
-            success:true,
-            bike,
-            message:"Bicicleta eliminada correctamente!"
+        Bike.findByIdAndDelete(bikeid, function(err, bike){
+            if (err){
+                return res.status(400).json({
+                    success: false,
+                    message: err.message
+                })
+            }
+            else {
+                if (!bike){
+                    return res.status(404).json({
+                        success:false,
+                        message:"La bicicleta no se encontró"
+                    })
+                }
+                return res.status(200).json({
+                    success:true,
+                    bike,
+                    message:"Bicicleta eliminada correctamente!"
+                })
+            }
         })
     }
     catch (error){
         return res.status(500).json({
             success: false,
-            message: err.message
+            message: error.message
         })
     }
 })
