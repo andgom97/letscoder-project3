@@ -5,31 +5,31 @@ bike:{
     type: mongoose.Types.ObjectId,
     ref: "Bike"
 },
-cuadro:{
+frame:{
     type: String,
     required: true
 },
-sillin:{
+saddle:{
     type: String,
     required: true
 },
-horquilla:{
+fork:{
     type: String,
     required: true
 },
-transmision:{
+transmission:{
     type: String,
     required: true
 },
-frenos:{
+brakes:{
     type: String,
     required: true
 },
-piñon:{
+sprocket:{
     type: String,
     required: true
 },
-plato:{
+plate:{
     type: String,
     required: true
 }
