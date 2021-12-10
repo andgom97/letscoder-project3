@@ -7,10 +7,16 @@ const ConfigRouter = express.Router()
 ConfigRouter.get("/configs", async (req,res)=>{
     let bikeid = req.query.bikeid
     try {
-        let configs = await Config.find({bike: bikeid})
+        let configs = [] 
+        if (!bikeid){
+            configs = await Config.find().populate("bike")
+        }
+        else {
+            configs = await Config.find({bike: bikeid}).populate("bike")
+        }
         return res.status(200).json({
             success: true,
-            configs
+            configs: configs
         })
     }
     catch (error){
@@ -34,13 +40,13 @@ ConfigRouter.get("/configs/:configid", async (req,res)=>{
         }
         return res.status(200).json({
             success: true,
-            config
+            config: config
         })
     }
     catch (error){
         return res.status(400).json({
             success: false,
-            message: err.message
+            message: error.message
         })
     }
 }) 
@@ -55,14 +61,15 @@ ConfigRouter.post("/configs", async (req,res)=>{
                 message:"Faltan datos para la creación de la configuración"
             })
         }
-        if (!Bike.findById(bike)){
+        let associatedBike = await Bike.findById(bike)
+        if (!associatedBike){
             return res.status(400).json({
                 success:false,
                 message:"La bicicleta no se encontró"
             })
         }
         const newConfig = new Config({
-            bike,
+            bike: bike,
             frame,
             saddle,
             fork,
@@ -74,14 +81,14 @@ ConfigRouter.post("/configs", async (req,res)=>{
         await newConfig.save()
         return res.status(200).json({
             success:true,
-            newConfig,
+            config: newConfig,
             message:"Configuración creada correctamente!"
         })
     }
     catch (error){
         return res.status(500).json({
             success: false,
-            message: err.message
+            message: error.message
         })
     }
 })
@@ -106,23 +113,32 @@ ConfigRouter.put("/configs/:configid", async (req,res)=>{
             sprocket: sprocket,
             plate: plate
         }
-        let config = Config.findByIdAndUpdate(configid,update)
-        if (!track){
-            return res.status(404).json({
-                success:false,
-                message:"La configuración no se encontró"
-            })
-        }
-        return res.status(200).json({
-            success:true,
-            config,
-            message:"Configuración modificada correctamente!"
+        Config.findByIdAndUpdate(configid,update, function(err,config){
+            if (err){
+                return res.status(400).json({
+                    success: false,
+                    message: err.message
+                })
+            }
+            else {
+                if (!config){
+                    return res.status(404).json({
+                        success:false,
+                        message:"La configuración no se encontró"
+                    })
+                }
+                return res.status(200).json({
+                    success:true,
+                    config: update,
+                    message:"Configuración modificada correctamente!"
+                })
+            }
         })
     }
     catch (error){
         return res.status(500).json({
             success: false,
-            message: err.message
+            message: error.message
         })
     }
 })
@@ -131,23 +147,32 @@ ConfigRouter.put("/configs/:configid", async (req,res)=>{
 ConfigRouter.delete("/configs/:configid", async (req,res)=>{
     const {configid} = req.params
     try {
-        let config = Config.findByIdAndDelete(configid)
-        if (!config){
-            return res.status(404).json({
-                success:false,
-                message:"La configuración no se encontró"
-            })
-        }
-        return res.status(200).json({
-            success:true,
-            config,
-            message:"Configuración eliminada correctamente!"
+        Config.findByIdAndDelete(configid, function(err,config){
+            if (err) {
+                return res.status(400).json({
+                    success: false,
+                    message: err.message
+                })
+            }
+            else {
+                if (!config){
+                    return res.status(404).json({
+                        success:false,
+                        message:"La configuración no se encontró"
+                    })
+                }
+                return res.status(200).json({
+                    success:true,
+                    config: config,
+                    message:"Configuración eliminada correctamente!"
+                })
+            }
         })
     }
     catch (error){
         return res.status(500).json({
             success: false,
-            message: err.message
+            message: error.message
         })
     }
 })
