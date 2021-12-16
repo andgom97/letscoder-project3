@@ -154,7 +154,6 @@ TrackRouter.put("/tracks/:trackid", async (req,res)=>{
 TrackRouter.delete("/tracks/:trackid", async (req,res)=>{
     const {trackid} = req.params
     try {
-        // TODO delete all registries associated to the trackid
         Track.findByIdAndDelete(trackid, function(err, track){
             if (err){
                 return res.status(400).json({
@@ -169,6 +168,17 @@ TrackRouter.delete("/tracks/:trackid", async (req,res)=>{
                         message:"La etapa no se encontró"
                     })
                 }
+                // delete all registries associated to the trackid
+                Registry.find({track: trackid}).then(function(registries){
+                    registries.forEach(registry => Registry.findByIdAndDelete(registry._id, function(err,registry) {
+                        if(err){
+                            return res.status(400).json({
+                                success: false,
+                                message: err.message
+                            })
+                        }
+                    }))
+                })
                 return res.status(200).json({
                     success:true,
                     track: track,

@@ -2,6 +2,7 @@ const express = require("express");
 const { model } = require("mongoose");
 const Bike = require("../models/Bike");
 const User = require("../models/User")
+const Config = require("../models/Config")
 const BikeRouter = express.Router()
 
 // GET api/bikes?userid=X
@@ -154,6 +155,19 @@ BikeRouter.delete("/bikes/:bikeid", async (req,res)=>{
                         message:"La bicicleta no se encontró"
                     })
                 }
+                // delete all configs associated to the bikeid
+                Config.find({bike:bike._id}).then(function(configs){
+                    configs.forEach(config => Config.findByIdAndDelete(config._id, function(err,config){
+                            if(err){
+                                return res.status(400).json({
+                                    success: false,
+                                    message: err.message
+                                })
+                            }
+                        })
+                    )
+                })
+
                 return res.status(200).json({
                     success:true,
                     bike: bike,
